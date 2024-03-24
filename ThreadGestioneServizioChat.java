@@ -1,55 +1,68 @@
 import javax.swing.JOptionPane;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.List;
 
-
+/**
+ * Classe per gestire il servizio di chat mediante thread.
+ */
 public class ThreadGestioneServizioChat implements Runnable {
-    private int nrMaxconnessioni;
-    private List lista; 
+    private int nrMaxConnessioni;
+    private List lista;
     private ThreadChatConnessioni[] listaConnessioni;
-    Thread ae;
+    private Thread ae;
     private ServerSocket serverChat;
 
-    public ThreadGestioneServizioChat(int numeroMaxConnessioni, list lista){
-        this.nMaxConnessioni = nrMaxConnessioni-1;
+    /**
+     * Costruttore della classe ThreadGestioneServizioChat.
+     * @param numeroMaxConnessioni Il numero massimo di connessioni consentite.
+     * @param lista Una lista per memorizzare i messaggi della chat.
+     */
+    public ThreadGestioneServizioChat(int numeroMaxConnessioni, List lista) {
+        this.nrMaxConnessioni = numeroMaxConnessioni - 1;
         this.lista = lista;
-        this.listaConnessioni = new ThreadChatConnessioni[this.ntMaxConnessioni];
+        this.listaConnessioni = new ThreadChatConnessioni[this.nrMaxConnessioni];
         ae = new Thread(this);
         ae.start();
-
     }
 
-    public void run(){
+    /**
+     * Metodo che avvia il thread per gestire il servizio di chat.
+     */
+    public void run() {
         boolean continuo = true;
-        try{
+        try {
             serverChat = new ServerSocket(6789);
-
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Errore durante l'istanziazione del server.");
+            continuo = false;
         }
-        catch(Exception e){
-            JOptionPane.showMessaggeDialog(null,"No intanziare");
-            continua = false;
 
-        }
-    if(continua){
-        try{
-            for(int xx = 0;xx<ntMaxConnessioni;xx++){
-                Socket tempo = null;
-                tempo = serverChat.accept();
-                listaConnessioni[xx]=new ThreadChatConnessioni(this.tempo);
-
+        if (continuo) {
+            try {
+                for (int xx = 0; xx < nrMaxConnessioni; xx++) {
+                    Socket tempo = null;
+                    tempo = serverChat.accept();
+                    listaConnessioni[xx] = new ThreadChatConnessioni(this, tempo);
+                }
+                serverChat.close();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Errore durante l'istanziazione del server.");
             }
-            serverChat.close();
+        }
+    }
 
+    /**
+     * Metodo per spedire un messaggio a tutti i client connessi alla chat.
+     * @param mex Il messaggio da spedire.
+     */
+    public void spedisciMessaggio(String mex) {
+        lista.add(mex);
+        lista.select(lista.getItemCount() - 1);
+        for (int xx = 0; xx < nrMaxConnessioni; xx++) {
+            if (listaConnessioni[xx] != null) {
+                listaConnessioni[xx].spedisciMessaggioChat(mex);
+            }
         }
-        catch(Exeption e){
-            JOptionPane.showMessageDialog(null, "NO instanziare");
-        }
     }
-    }
-  public void spedisciMessaggio(String mex){
-    lista.add(mex);
-    lista.select(lista.getItemCount()-1);
-    for(int xx = 0;xx<ntMaxConnessioni;xx++){
-      if(listaConnessioni[xx]!=null){
-        listaConnessioni[xx].spedisciMessaggioChat(mex);
-      }
-    }
-  }
+}
